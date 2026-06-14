@@ -4,14 +4,91 @@ This project implements a production-style financial copilot over PDF filings wi
 
 ## Pipeline
 
-User Query
--> Intent Detection
--> Company Discovery from `Data/`
--> Metadata Extraction (LLM structured output)
--> Hybrid Retrieval (dense + sparse)
--> Metadata Filtering in Qdrant
--> Cross-Encoder Reranking
--> Grounded Response Generation with citations
+```mermaid
+flowchart TD
+    A[User query] --> B{Query mode}
+    B -->|legacy| C[Legacy QA pipeline]
+    B -->|copilot| D[Intent router]
+    B -->|auto| E{Finance action?}
+    E -->|No| C
+    E -->|Yes| D
+
+    D --> F[Company discovery from Data folders]
+    F --> G{Copilot tool}
+    G -->|comparison| H[Comparison analysis]
+    G -->|forecast| I[Forecast synthesis]
+    G -->|trend| J[Trend analysis]
+    G -->|risk| K[Risk review]
+    G -->|report| L[Structured report]
+    G -->|letter| M[Professional draft]
+    G -->|suggestion| N[Follow-up questions]
+
+    C --> O[Metadata extraction]
+    O --> P[Hybrid retrieval]
+    P --> Q[Qdrant metadata filtering]
+    Q --> R[Cross-encoder reranking]
+    R --> S[Grounded answer with citations]
+
+    H --> S
+    I --> S
+    J --> S
+    K --> S
+    L --> S
+    M --> S
+    N --> S
+```
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Clients
+        UI[Streamlit UI]
+        CLI[CLI]
+        APIClient[HTTP client]
+    end
+
+    subgraph App["RAG application"]
+        FastAPI[FastAPI app]
+        Main[CLI entrypoint]
+        Graph[Shared LangGraph pipeline]
+        Copilot[Copilot router]
+        Retrieval[Hybrid retrieval]
+        Reranker[Cross-encoder reranker]
+        Generator[Answer generation]
+        History[Local chat history]
+    end
+
+    subgraph DataLayer["Data and indexes"]
+        PDFs[Financial filing PDFs]
+        Metadata[LLM metadata extraction]
+        Qdrant[(Qdrant hybrid collection)]
+    end
+
+    subgraph Models
+        Embed[Dense embeddings]
+        Sparse[Sparse embeddings]
+        LLM[LLM provider]
+    end
+
+    UI --> FastAPI
+    UI --> History
+    APIClient --> FastAPI
+    CLI --> Main
+    FastAPI --> Graph
+    Main --> Graph
+    Graph --> Copilot
+    Graph --> Retrieval
+    Retrieval --> Qdrant
+    Retrieval --> Reranker
+    Reranker --> Generator
+    Copilot --> Generator
+    Generator --> LLM
+    PDFs --> Metadata
+    Metadata --> Qdrant
+    Embed --> Qdrant
+    Sparse --> Qdrant
+```
 
 ## Modules
 
