@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+
+__pycache__/
+*.py[cod]
+
+.chat_history/
+.streamlit/secrets.toml
